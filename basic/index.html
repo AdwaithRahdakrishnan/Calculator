@@ -1,329 +1,37 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <title>Firebase Guestbook</title>
-   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600&display=swap" rel="stylesheet">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  
-  <style>
-    body {
-      background: #0f0f0f;
-      color: #e0e0e0;
-      padding: 40px;
-      font-family: 'Segoe UI', sans-serif;
-    }
-    .form-control, .btn, textarea {
-      border-radius: 12px;
-      background-color: #1a1a1a;
-      border: 1px solid #333;
-      color: #eee;
-    }
-    .form-control::placeholder, textarea::placeholder {
-      color: #777;
-    }
-    .btn {
-      color: #fff;
-      border: none;
-      transition: background 0.3s ease;
-    }
-    .btn-success    { background-color: #28a745; }
-    .btn-primary    { background-color: #007bff; }
-    .btn-warning    { background-color: #ffc107; color: #111; }
-    .btn-danger     { background-color: #dc3545; }
-    .btn-light      { background-color: #444; }
-
-    .btn:hover {
-      opacity: 0.85;
-    }
-
-
-    .message {
-      background: #1c1c1c;
-      padding: 15px;
-      margin-top: 15px;
-      border-left: 4px solid #555;
-      border-radius: 8px;
-    }
-
-    #userInfo {
-      margin-top: 20px;
-      font-weight: 500;
-    }
-
-     h2 {
-      color: #f0f0f0;
-    }
-     h1, h2 {
-      font-family: 'Poppins', sans-serif;
-      font-weight: 600;
-      font-size: 2.5rem;
-      letter-spacing: 1px;
-      color: #ffffff;
-      animation: fadeIn 2s ease-out, typing 3s steps(30, end);
-      white-space: nowrap;
-      overflow: hidden;
-      border-right: 3px solid #fff;
-    }
-
-
-    @keyframes fadeInUp {
-  0% {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  100% {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.message {
-  background: #1c1c1c;
-  padding: 15px;
-  margin-top: 15px;
-  border-left: 4px solid #555;
-  border-radius: 8px;
-  animation: fadeInUp 0.6s ease forwards;
-}
-
-.btn {
-  background-color: #1f1f1f;
-  color: #eee;
-  border: 1px solid #333;
-  border-radius: 10px;
-  transition: all 0.3s ease;
-}
-
-.btn:hover {
-  background-color: #2a2a2a;
-  border-color: #444;
-  color: #fff;
-}
-
-.btn-success {
-  background-color: #2e4f35;
-  border-color: #2e4f35;
-}
-
-.btn-primary {
-  background-color: #30475e;
-  border-color: #30475e;
-}
-
-.btn-warning {
-  background-color: #5e4f2e;
-  border-color: #5e4f2e;
-}
-
-.btn-danger {
-  background-color: #5e2e2e;
-  border-color: #5e2e2e;
-}
-
-.btn-light {
-  background-color: #e1e1e1;
-  color: #111;
-  border-color: #ccc;
-}
-
-.btn-light:hover {
-  background-color: #ccc;
-}
-.glass-container {
-  background: rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border-radius: 20px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  padding: 30px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-  transition: all 0.3s ease;
-}
-
-.glass-container:hover {
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
-}
-  </style>
-</head>
-<body class="container">
-
-  <h1 class="mb-4"> Minimal Guestbook</h1>
-
-  <!-- Auth Section -->
-  <div class="row g-3 mb-3">
-    <div class="col-md-4">
-      <input type="email" id="email" class="form-control" placeholder="Email">
-    </div>
-    <div class="col-md-4">
-      <input type="password" id="password" class="form-control" placeholder="Password">
-    </div>
-  </div>
-  <div class="d-flex flex-wrap gap-2 mb-4">
-    <button onclick="signUp()" class="btn btn-success">Sign Up</button>
-    <button onclick="signIn()" class="btn btn-primary">Sign In</button>
-    <button onclick="signOut()" class="btn btn-warning">Sign Out</button>
-    <button onclick="googleSignIn()" class="btn btn-danger">Google Sign-In</button>
-  </div>
-  <div id="userInfo" class="mb-4 text-muted"></div>
-
-  <!-- Message Input Section -->
-  <div class="mb-3">
-    <input type="text" id="nameInput" class="form-control mb-3" placeholder="Your Name">
-    <textarea id="messageInput" class="form-control mb-3" rows="3" placeholder="Your Message"></textarea>
-    <button onclick="submitMessage()" class="btn btn-outline-light mt-4 px-4 py-2 rounded-pill">Send Message</button>
-  </div>
-
-  <!-- Messages Section -->
-  <h2 class="mt-5">💬 Messages</h2>
-  <div id="messages"></div>
-
-  <button onclick="clearAllMessages()" class="btn btn-outline-light mt-4 px-4 py-2 rounded-pill">
-  Clear All Messages
-</button>
-
-  <!-- Firebase SDKs -->
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
-
-  <script>
-    const firebaseConfig = {
-      apiKey: "AIzaSyAlMFQxGI9duig3iS3XridMf1BLjxjQvh8",
-      authDomain: "test-3d709.firebaseapp.com",
-      projectId: "test-3d709",
-      storageBucket: "test-3d709.appspot.com",
-      messagingSenderId: "807303426940",
-      appId: "1:807303426940:web:4a89cad57650061f342af9",
-      measurementId: "G-7711GGB6G5"
-    };
-
-    firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
-    const db = firebase.firestore();
-
-    function signUp() {
-      const email = document.getElementById("email").value;
-      const password = document.getElementById("password").value;
-
-      auth.createUserWithEmailAndPassword(email, password)
-        .then(() => alert("Account created successfully 🎉"))
-        .catch(error => alert("Error: " + error.message));
-    }
-
-    function signIn() {
-      const email = document.getElementById("email").value;
-      const password = document.getElementById("password").value;
-
-      auth.signInWithEmailAndPassword(email, password)
-        .then(() => alert("Logged in 🥳"))
-        .catch(error => alert("Login failed: " + error.message));
-    }
-
-    function signOut() {
-      auth.signOut()
-        .then(() => alert("Signed out 😢"))
-        .catch(console.error);
-    }
-
-    function googleSignIn() {
-      const provider = new firebase.auth.GoogleAuthProvider();
-
-      firebase.auth().signInWithPopup(provider)
-        .then(result => alert(`Signed in as ${result.user.displayName} 🎉`))
-        .catch(error => alert("Google Sign-In failed: " + error.message));
-    }
-
-    auth.onAuthStateChanged(user => {
-      const infoDiv = document.getElementById("userInfo");
-      infoDiv.innerHTML = user
-        ? `<span class="text-success">Logged in as <strong>${user.email}</strong></span>`
-        : `<span class="text-danger">Not logged in</span>`;
-    });
-
-    function submitMessage() {
-      const user = firebase.auth().currentUser;
-      if (!user) return alert("You must be signed in to post a message!");
-
-      
-      const name = document.getElementById('nameInput').value.trim();
-      const message = document.getElementById('messageInput').value.trim();
-
-      if (!name || !message) {
-        alert('Both fields are required!');
-        return;
-      }
-
-      db.collection("guestbook").add({
-  name,
-  message,
-  email: user.email,
-  timestamp: firebase.firestore.FieldValue.serverTimestamp()
-}).then(docRef => {
-  nameField.value = '';
-  messageField.value = '';
-
-  // Add optimistic UI update (append manually)
-  const msg = document.createElement('div');
-  msg.className = 'message';
-  msg.innerHTML = `<strong>${name}</strong>: ${message}`;
-  document.getElementById('messages').prepend(msg);
-
-  alert("Message posted! ✅");
-}).catch(err => {
-  console.error("Firestore Error:", err);
-  alert("Failed to post message 😢");
-});
-    }
-
-    db.collection("guestbook")
-      .orderBy("timestamp", "desc")
-      .onSnapshot(snapshot => {
-        const messagesDiv = document.getElementById('messages');
-        messagesDiv.innerHTML = '';
-        snapshot.forEach(doc => {
-          const data = doc.data();
-          const msg = document.createElement('div');
-          msg.className = 'message';
-          msg.innerHTML = `<strong>${data.name}</strong>: ${data.message}`;
-          messagesDiv.appendChild(msg);
-        });
-      });
-
-       const text = "Leave a Message";
-  const header = document.querySelector("h1");
-  let index = 0;
-
-  function typeWriter() {
-    if (index < text.length) {
-      header.innerHTML += text.charAt(index);
-      index++;
-      setTimeout(typeWriter, 100);
-    }
-  }
-function clearAllMessages() {
-  if (!confirm("Are you sure you want to delete all messages? This can't be undone.")) return;
-
-  db.collection("guestbook").get().then(snapshot => {
-    const batch = db.batch();
-    snapshot.forEach(doc => {
-      batch.delete(doc.ref);
-    });
-
-    return batch.commit();
-  }).then(() => {
-    alert("All messages deleted ❌🧼");
-  }).catch(err => {
-    console.error("Error deleting messages: ", err);
-    alert("Something went wrong 😵");
-  });
-}
-
-  header.innerHTML = ""; // clear initial text
-  typeWriter();
-  </script>
-</body>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Calculator</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <form class="calculator" name="calc">
+      <input type="text" class="value" name="txt" readonly="" />
+      <span class="num clear" onclick="document.calc.txt.value = ''">c</span>
+      <span class="num" onclick="document.calc.txt.value += '/'">/</span>
+      <span class="num" onclick="document.calc.txt.value += '*'">*</span>
+      <span class="num" onclick="document.calc.txt.value += '7'">7</span>
+      <span class="num" onclick="document.calc.txt.value += '8'">8</span>
+      <span class="num" onclick="document.calc.txt.value += '9'">9</span>
+      <span class="num" onclick="document.calc.txt.value += '-'">-</span>
+      <span class="num" onclick="document.calc.txt.value += '4'">4</span>
+      <span class="num" onclick="document.calc.txt.value += '5'">5</span>
+      <span class="num" onclick="document.calc.txt.value += '6'">6</span>
+      <span class="num plus" onclick="document.calc.txt.value += '+'">+</span>
+      <span class="num" onclick="document.calc.txt.value += '1'">1</span>
+      <span class="num" onclick="document.calc.txt.value += '2'">2</span>
+      <span class="num" onclick="document.calc.txt.value += '3'">3</span>
+      <span class="num" onclick="document.calc.txt.value += '0'">0</span>
+      <span class="num" onclick="document.calc.txt.value += '00'">00</span>
+      <span class="num" onclick="document.calc.txt.value += '.'">.</span>
+      <span
+        class="num equal"
+        onclick="document.calc.txt.value = eval(calc.txt.value)"
+      >
+        =
+      </span>
+    </form>
+  </body>
 </html>
-
-
-
-new file added
